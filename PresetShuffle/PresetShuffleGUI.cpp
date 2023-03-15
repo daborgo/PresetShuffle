@@ -47,6 +47,22 @@ void PresetShuffle::RenderSettings() {
 		rangeCvar.setValue(rangeMax);
 	}
 
+	ImGui::Spacing();
+	ImGui::Spacing();
+	ImGui::Separator();
+	ImGui::Spacing();
+	ImGui::Spacing();
+	ImGui::Text("Select the checkboxes next to the presets you want to be enabled during the game-shuffle cycle! All unselected presets will not be considered.");
+	
+	ImGui::BeginChild("PresetMenu", ImVec2(300, 300), true, ImGuiWindowFlags_None);
+	for (const auto name : nameVec) {
+		bool selected = presetMap.at(name);
+		if (ImGui::Checkbox(name.c_str(), &selected)) {					// Checkboxes for each preset determine availability for shuffle.
+			presetMap.insert_or_assign(name,selected);
+		}
+	}
+	ImGui::EndChild();
+
 	/* DEBUG
 	if (ImGui::Button("Check State")) {									// Button logs game state and relevant info.
 		gameWrapper->Execute([this](GameWrapper* gw) { cvarManager->executeCommand("CheckState"); });
