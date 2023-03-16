@@ -13,4 +13,4 @@ If so, you might want to install __Preset Shuffle__! This plugin shuffles betwee
 * (NEW) Preset Selection window to choose specific presets to be enabled in the shuffle.
 
 ### Find this plugin on BakkesPlugins.com: [https://bakkesplugins.com/plugins/view/380](https://bakkesplugins.com/plugins/view/380)
-#### Created by dcbl#6662
+#### Contact me for suggestions, bug reports, good dad jokes, etc: dcbl#6662 
