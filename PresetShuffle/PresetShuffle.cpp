@@ -31,10 +31,18 @@ void PresetShuffle::onLoad() {		// Function runs on plugin load.
 			});
 	cvarManager->registerCvar("PresetStore", "", "Stores preset info across sessions.")
 		.addOnValueChanged([this](std::string oldValue, CVarWrapper cvar) {
-		for (int i = 0; i < nameVec.size(); i++) {
-			presetMap.insert_or_assign(nameVec.at(i), std::stoi(cvar.getStringValue().substr(i, 1)));
+		LOG("Value Changed");
+		if (cvar.getStringValue().length() >= nameVec.size()) {
+			for (int i = 0; i < nameVec.size(); i++) {
+				presetMap.insert_or_assign(nameVec.at(i), std::stoi(cvar.getStringValue().substr(i, 1)));
+			}
 		}
-			});
+		else {
+			for (int i = 0; i < cvar.getStringValue().length(); i++) {
+				presetMap.insert_or_assign(nameVec.at(i), std::stoi(cvar.getStringValue().substr(i, 1)));
+			}
+		}
+		});
 	cvarManager->registerNotifier("ShufflePreset", [this](std::vector<std::string> args) {			// Notifier allows shufflePreset button.
 		shufflePreset();
 			}, "", PERMISSION_ALL);
@@ -44,9 +52,16 @@ void PresetShuffle::onLoad() {		// Function runs on plugin load.
 
 	CVarWrapper storageCvar = cvarManager->getCvar("PresetStore");
 	presetMap.clear();
-	for(int i = 0; i<nameVec.size(); i++){
-		presetMap.insert_or_assign(nameVec.at(i), std::stoi(storageCvar.getStringValue().substr(i, 1)));
+	/*if (storageCvar.getStringValue().size() != nameVec.size()) {
+		for (int i = 0; i < nameVec.size(); i++) {
+			presetMap.insert_or_assign(nameVec.at(i),true);
+		}
 	}
+	else {*/
+		for (int i = 0; i < nameVec.size(); i++) {
+			presetMap.insert_or_assign(nameVec.at(i), std::stoi(storageCvar.getStringValue().substr(i, 1)));
+		}
+	//}
 
 	/* DEBUG
 	cvarManager->registerNotifier("CheckState", [this](std::vector<std::string> args) {				// Notifier allows checkState button (for debugging).
@@ -115,6 +130,10 @@ void PresetShuffle::loadHooks() {	// Function loads game hooks.
 		[this](std::string eventName) {
 			updateMap();
 		});
+	gameWrapper->HookEvent("Function TAGame.ProfileLoadoutSave_TA.RenamePreset",
+		[this](std::string eventName) {
+			updateMap();
+		});
 }
 
 void PresetShuffle::shufflePreset() {	// Function shuffles preset.
@@ -162,8 +181,19 @@ void PresetShuffle::updateMap() {		// Function updates maps and vectors when gar
 	}
 	nameVec.clear();
 	for (int i = 0; i < presets.Count(); i++) {		// Updates containers.
-		presetMap.insert({presets.Get(i).GetName(),true});
 		nameVec.push_back(presets.Get(i).GetName());
+		presetMap.insert({nameVec.at(i),true});
+	}
+	for (const auto& pair : presetMap) {
+		bool exist = false;
+		for (const auto name : nameVec) {
+			if (pair.first==name) {
+				exist = true;
+			}
+		}
+		if (!exist) {
+			presetMap.erase(pair.first);
+		}
 	}
 	CVarWrapper storageCvar = cvarManager->getCvar("PresetStore");
 	string set = "";
@@ -171,6 +201,7 @@ void PresetShuffle::updateMap() {		// Function updates maps and vectors when gar
 		set += std::to_string(presetMap.at(name));
 	}
 	storageCvar.setValue(set);
+	LOG("updateMap end reach");
 }
 
 /* DEBUG
