@@ -31,7 +31,6 @@ void PresetShuffle::onLoad() {		// Function runs on plugin load.
 			});
 	cvarManager->registerCvar("PresetStore", "", "Stores preset info across sessions.")				// Cvar updates preset info when garage is changed, stores in string variable.
 		.addOnValueChanged([this](std::string oldValue, CVarWrapper cvar) {
-		LOG("Value Changed");
 		if (cvar.getStringValue().length() >= nameVec.size()) {
 			for (int i = 0; i < nameVec.size(); i++) {
 				presetMap.insert_or_assign(nameVec.at(i), std::stoi(cvar.getStringValue().substr(i, 1)));
@@ -130,7 +129,7 @@ void PresetShuffle::loadHooks() {	// Function loads game hooks.
 }
 
 void PresetShuffle::shufflePreset() {	// Function shuffles preset.
-	if (!psEnabled || loading) { LOG("Error");  return; }		// Null check if plugin is disabled or game state is loading screen.
+	if (!psEnabled || loading) { return; }		// Null check if plugin is disabled or game state is loading screen.
 	bool flag = true;
 	std::vector<std::string> checked;
 	for (const auto& pair : presetMap) {		// Stores checked presets in a separate vector.
@@ -194,7 +193,6 @@ void PresetShuffle::updateMap() {		// Function updates maps and vectors when gar
 		set += std::to_string(presetMap.at(name));
 	}
 	storageCvar.setValue(set);
-	LOG("updateMap end reach");
 }
 
 /* DEBUG
