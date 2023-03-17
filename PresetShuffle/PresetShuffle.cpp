@@ -29,7 +29,7 @@ void PresetShuffle::onLoad() {		// Function runs on plugin load.
 		.addOnValueChanged([this](std::string oldValue, CVarWrapper cvar) {
 		lockEnabled = cvar.getBoolValue();
 			});
-	cvarManager->registerCvar("PresetStore", "", "Stores preset info across sessions.")
+	cvarManager->registerCvar("PresetStore", "", "Stores preset info across sessions.")				// Cvar updates preset info when garage is changed, stores in string variable.
 		.addOnValueChanged([this](std::string oldValue, CVarWrapper cvar) {
 		LOG("Value Changed");
 		if (cvar.getStringValue().length() >= nameVec.size()) {
@@ -52,16 +52,9 @@ void PresetShuffle::onLoad() {		// Function runs on plugin load.
 
 	CVarWrapper storageCvar = cvarManager->getCvar("PresetStore");
 	presetMap.clear();
-	/*if (storageCvar.getStringValue().size() != nameVec.size()) {
-		for (int i = 0; i < nameVec.size(); i++) {
-			presetMap.insert_or_assign(nameVec.at(i),true);
-		}
+	for (int i = 0; i < nameVec.size(); i++) {
+		presetMap.insert_or_assign(nameVec.at(i), std::stoi(storageCvar.getStringValue().substr(i, 1)));
 	}
-	else {*/
-		for (int i = 0; i < nameVec.size(); i++) {
-			presetMap.insert_or_assign(nameVec.at(i), std::stoi(storageCvar.getStringValue().substr(i, 1)));
-		}
-	//}
 
 	/* DEBUG
 	cvarManager->registerNotifier("CheckState", [this](std::vector<std::string> args) {				// Notifier allows checkState button (for debugging).
@@ -130,7 +123,7 @@ void PresetShuffle::loadHooks() {	// Function loads game hooks.
 		[this](std::string eventName) {
 			updateMap();
 		});
-	gameWrapper->HookEvent("Function TAGame.ProfileLoadoutSave_TA.RenamePreset",
+	gameWrapper->HookEvent("Function TAGame.ProfileLoadoutSave_TA.RenamePreset",		// BROKEN: Hooked event runs when preset is renamed.
 		[this](std::string eventName) {
 			updateMap();
 		});
@@ -184,7 +177,7 @@ void PresetShuffle::updateMap() {		// Function updates maps and vectors when gar
 		nameVec.push_back(presets.Get(i).GetName());
 		presetMap.insert({nameVec.at(i),true});
 	}
-	for (const auto& pair : presetMap) {
+	for (const auto& pair : presetMap) {			// Erases extra pairs in presetMap that were removed from garage or renamed.
 		bool exist = false;
 		for (const auto name : nameVec) {
 			if (pair.first==name) {
