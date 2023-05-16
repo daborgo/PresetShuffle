@@ -10,7 +10,7 @@ std::string PresetShuffle::GetPluginName(){
 }
 
 void PresetShuffle::RenderSettings() {
-	ImGui::TextUnformatted("A plugin that shuffles between selected presets in your garage after a set amount of games.  Game counter resets to 0 upon exiting the game.");
+	ImGui::TextUnformatted("A plugin that shuffles/cycles between selected presets in your garage after a set amount of games.");
 
 	CVarWrapper enableCvar = cvarManager->getCvar("ps_enabled");
 	if (!enableCvar) { return; }
@@ -29,14 +29,27 @@ void PresetShuffle::RenderSettings() {
 		lockCvar.setValue(locked);
 	}
 	if (ImGui::IsItemHovered()) {
-		ImGui::SetTooltip("Locks your current preset, pauses game-shuffle cycle (Shuffle Preset button still available)");
+		ImGui::SetTooltip("Locks your current preset, pauses game-shuffle cycle (Change Preset button still available)");
 	}
 
-	if (ImGui::Button("Shuffle Preset")) {								// Button shuffles preset instantly.
-		gameWrapper->Execute([this](GameWrapper* gw) { cvarManager->executeCommand("ShufflePreset"); });
+	CVarWrapper changeCvar = cvarManager->getCvar("ChangeMode");		// Buttons determine change mode.
+	if (!changeCvar) { return; }
+	int mode = changeCvar.getBoolValue();
+	ImGui::RadioButton("Shuffle Presets", &mode, 0); ImGui::SameLine();
+	if (ImGui::IsItemHovered()) {
+		ImGui::SetTooltip("Shuffles presets randomly.");
+	}
+	ImGui::RadioButton("Cycle Presets", &mode, 1);
+	if (ImGui::IsItemHovered()) {
+		ImGui::SetTooltip("Cycles through presets in garage order.");
+	}
+	if (mode == 0) { changeCvar.setValue(false); } else { changeCvar.setValue(true); }
+
+	if (ImGui::Button("Change Preset")) {								// Button changes preset instantly.
+		gameWrapper->Execute([this](GameWrapper* gw) { cvarManager->executeCommand("ChangePreset"); });
 	}
 	if (ImGui::IsItemHovered()) {
-		ImGui::SetTooltip("Shuffles your preset immediately.");
+		ImGui::SetTooltip("Based on above switch, shuffles randomly OR changes to next enabled preset.");
 	}
 
 	CVarWrapper rangeCvar = cvarManager->getCvar("game_range");
@@ -52,7 +65,7 @@ void PresetShuffle::RenderSettings() {
 	ImGui::Separator();
 	ImGui::Spacing();
 	ImGui::Spacing();
-	ImGui::Text("Select the checkboxes next to the presets you want to be enabled during the game-shuffle cycle! All unselected presets will not be considered.");
+	ImGui::Text("Select the checkboxes next to the presets you want to be enabled! All unselected presets will not be considered.");
 	
 	ImGui::BeginChild("PresetMenu", ImVec2(300, 300), true, ImGuiWindowFlags_None);
 	for (const auto name : nameVec) {

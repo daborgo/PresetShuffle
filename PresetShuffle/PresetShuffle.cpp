@@ -11,6 +11,7 @@ BAKKESMOD_PLUGIN(PresetShuffle, "Preset Shuffle", plugin_version, PLUGINTYPE_FRE
 std::shared_ptr<CVarManagerWrapper> _globalCvarManager;
 bool psEnabled = true;				// Determines state of the plugin.
 bool lockEnabled = false;			// Determines if preset is locked.
+bool changeMode = false;			// Determines change mode (shuffle or next).
 int gameTime = 0;					// Counter for game time in which player has a car on the field.
 bool gameFlag = true;				// Determines if game has been "completed" (minimum 1 minute on-field time).
 bool loading = false;				// Determines if game state is loading screen.
@@ -29,6 +30,10 @@ void PresetShuffle::onLoad() {		// Function runs on plugin load.
 		.addOnValueChanged([this](std::string oldValue, CVarWrapper cvar) {
 		lockEnabled = cvar.getBoolValue();
 			});
+	cvarManager->registerCvar("ChangeMode", "0", "Change mode", true, true, 0, true, 1)			// Cvar stores change mode.
+		.addOnValueChanged([this](std::string oldValue, CVarWrapper cvar) {
+		changeMode = cvar.getBoolValue();
+			});
 	cvarManager->registerCvar("PresetStore", "", "Stores preset info across sessions.")				// Cvar updates preset info when garage is changed, stores in string variable.
 		.addOnValueChanged([this](std::string oldValue, CVarWrapper cvar) {
 		if (cvar.getStringValue().length() >= nameVec.size()) {
@@ -42,8 +47,8 @@ void PresetShuffle::onLoad() {		// Function runs on plugin load.
 			}
 		}
 		});
-	cvarManager->registerNotifier("ShufflePreset", [this](std::vector<std::string> args) {			// Notifier allows shufflePreset button.
-		shufflePreset();
+	cvarManager->registerNotifier("ChangePreset", [this](std::vector<std::string> args) {			// Notifier allows changePreset button.
+		changePreset();
 			}, "", PERMISSION_ALL);
 
 	loadHooks();
@@ -106,9 +111,9 @@ void PresetShuffle::loadHooks() {	// Function loads game hooks.
 			if (lockEnabled) {		// Condition keeps game counter from updating if preset is locked.
 				countCvar.setValue(0);
 			}
-			if (countCvar.getIntValue() >= rangeCvar.getIntValue()) {		// Condition shuffles preset if game counter reaches game range.
+			if (countCvar.getIntValue() >= rangeCvar.getIntValue()) {		// Condition changes preset if game counter reaches game range.
 				LOG("Preset switch activated!");
-				shufflePreset();
+				changePreset();
 			}
 			readied = false;
 			loading = true;
@@ -128,7 +133,7 @@ void PresetShuffle::loadHooks() {	// Function loads game hooks.
 		});
 }
 
-void PresetShuffle::shufflePreset() {	// Function shuffles preset.
+void PresetShuffle::changePreset() {	// Function changes preset.
 	if (!psEnabled || loading) { return; }		// Null check if plugin is disabled or game state is loading screen.
 	bool flag = true;
 	std::vector<std::string> checked;
@@ -139,6 +144,7 @@ void PresetShuffle::shufflePreset() {	// Function shuffles preset.
 		}
 	}
 	if (flag) { return; }	// Null check for no selected presets.
+	CVarWrapper changeCvar = cvarManager->getCvar("ChangeMode");
 	CVarWrapper countCvar = cvarManager->getCvar("game_count");
 	LoadoutSaveWrapper lsw = gameWrapper->GetUserLoadoutSave();
 	ArrayWrapper presets = lsw.GetPresets();					// ArrayWrapper stores preset set.
@@ -146,18 +152,31 @@ void PresetShuffle::shufflePreset() {	// Function shuffles preset.
 		auto it = std::find(nameVec.begin(), nameVec.end(), checked.at(0));
 		auto index = std::distance(nameVec.begin(), it);
 		lsw.EquipPreset(lsw.GetPreset(index));
+		return;
 	}
-	int current = lsw.GetIndex(lsw.GetEquippedLoadout());		// int stores index of current preset
-	auto index = current;
-	while (index == current && checked.size() > 1) {			// Loops until different index than current loadout, prevents same preset kept after shuffle.
-		std::random_device dev;
-		std::mt19937 rng(dev());
-		std::uniform_int_distribution<std::mt19937::result_type> dist6(0, checked.size() - 1);	// Random distribution formula.
-		int rand = dist6(rng);
-		auto it = std::find(nameVec.begin(), nameVec.end(), checked.at(rand));
-		index = std::distance(nameVec.begin(), it);										// Finds index of random checked preset in original map.
+	int current = lsw.GetIndex(lsw.GetEquippedLoadout());		// int stores index of current preset.
+	if (!changeCvar.getBoolValue()) {	//SHUFFLE preset.
+		auto index = current;
+		while (index == current && checked.size() > 1) {			// Loops until different index than current loadout, prevents same preset kept after change.
+			std::random_device dev;
+			std::mt19937 rng(dev());
+			std::uniform_int_distribution<std::mt19937::result_type> dist6(0, checked.size() - 1);	// Random distribution formula.
+			int rand = dist6(rng);
+			auto it = std::find(nameVec.begin(), nameVec.end(), checked.at(rand));
+			index = std::distance(nameVec.begin(), it);										// Finds index of random checked preset in original map.
+		}
+		lsw.EquipPreset(lsw.GetPreset(index));
 	}
-	lsw.EquipPreset(lsw.GetPreset(index));
+	else {							// NEXT preset
+		auto index = current;
+		for (int i = index+1; i!=index && index==current; i++) {	// Loops from equipped preset index to end, then jumps to beginning and goes until the starting index.
+			if (i >= nameVec.size()) { i = 0; }
+			if (std::distance(checked.begin(), std::find(checked.begin(), checked.end(), lsw.GetPreset(i).GetName())) != std::distance(checked.begin(), checked.end())) {	// If checked item exists (otherwise returns iterator to one-past-end).
+				index = i;
+			}
+		}
+		lsw.EquipPreset(lsw.GetPreset(index));
+	}
 	countCvar.setValue(0);
 	gameFlag = false;
 }
