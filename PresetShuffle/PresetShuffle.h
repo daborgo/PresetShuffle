@@ -14,7 +14,7 @@ class PresetShuffle : public BakkesMod::Plugin::BakkesModPlugin, public BakkesMo
 	void onLoad() override;
 	void onUnload() override;
 	void loadHooks();
-	void shufflePreset();
+	void changePreset();
 	void updateMap();
 //	void checkState();
 
@@ -27,5 +27,5 @@ class PresetShuffle : public BakkesMod::Plugin::BakkesModPlugin, public BakkesMo
 
 
 
-//TODO: persistent storage maps, favorite presets?
+//TODO: favorite presets?
 //MAYBE: better loading screen shuffle button protection?
