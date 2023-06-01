@@ -10,7 +10,8 @@ If so, you might want to install __Preset Shuffle__! This plugin shuffles betwee
 * Lock Preset checkbox to keep your current preset and temporarily disable automatic game-shuffle cycle.
 * Shuffle Preset button to instantly shuffle between your presets in your garage.
 * Number of Games slider to determine how many games should pass between shuffling.
-* (NEW) Preset Selection window to choose specific presets to be enabled in the shuffle.
+* Preset Selection window to choose specific presets to be enabled in the shuffle.
+* (NEW) Cycle Preset added! Now you can choose to cycle sequentially through your presets rather than randomly shuffle.
 
 ### Find this plugin on BakkesPlugins.com: [https://bakkesplugins.com/plugins/view/380](https://bakkesplugins.com/plugins/view/380)
 #### Contact me for suggestions, bug reports, good dad jokes, etc: dcbl#6662 
