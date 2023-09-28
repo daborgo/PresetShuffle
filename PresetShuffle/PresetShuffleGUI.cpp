@@ -65,7 +65,7 @@ void PresetShuffle::RenderSettings() {
 	ImGui::Separator();
 	ImGui::Spacing();
 	ImGui::Spacing();
-	ImGui::Text("Select the checkboxes next to the presets you want to be enabled! All unselected presets will not be considered.");
+	ImGui::Text("Select the checkboxes to enable presets!");	
 	
 	ImGui::BeginChild("PresetMenu", ImVec2(300, 300), true, ImGuiWindowFlags_None);
 	for (const auto name : nameVec) {
@@ -75,7 +75,18 @@ void PresetShuffle::RenderSettings() {
 		}
 	}
 	ImGui::EndChild();
-
+	if (ImGui::Button("Check All")) {
+		for (const auto name : nameVec) {
+			presetMap.insert_or_assign(name, true);
+		}
+	}
+	ImGui::SameLine();
+	if (ImGui::Button("Uncheck All")) {
+		for (const auto name : nameVec) {
+			presetMap.insert_or_assign(name, false);
+		}
+	}
+	
 	/* DEBUG
 	if (ImGui::Button("Check State")) {									// Button logs game state and relevant info.
 		gameWrapper->Execute([this](GameWrapper* gw) { cvarManager->executeCommand("CheckState"); });
